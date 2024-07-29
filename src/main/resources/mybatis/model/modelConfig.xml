@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+	
+<configuration>
+	<typeAliases>
+		<!-- 방준철 -->
+		<typeAlias type="com.spring.final01.product.dto.ProductDTO" alias="productDTO"/>
+		
+		<!-- 김지현 -->
+		<typeAlias type="com.spring.final01.money.dto.MoneyDTO" alias="moneyDTO"/>
+		
+		<!-- 이창훈 -->
+		<typeAlias type="com.spring.final01.member.dto.MemberDTO" alias="memberDTO"/>
+		<typeAlias type="com.spring.final01.member.dto.CustomerDTO" alias="customerDTO"/>
+		<typeAlias type="com.spring.final01.money.dto.MoneyDTO" alias="moneyDTO"/>
+		
+		<!-- 공지사항 -->
+		<typeAlias type="com.spring.final01.board.dto.BoardDTO" alias="boardDTO"/>
+	</typeAliases>
+</configuration>

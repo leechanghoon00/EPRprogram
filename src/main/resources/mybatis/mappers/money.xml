@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.money">
+
+	<resultMap type="moneyDTO" id="moneyResult">
+		<!-- pay_tbl -->
+		<result property="work_period" column="work_period" />
+		<result property="pay" column="pay" />
+		<result property="remain_annual" column="remain_annual" />
+		<result property="pay_id" column="pay_id" />
+		<!-- coMember_tbl -->
+		<result property="co_user_cd" column="co_user_cd" />
+		<result property="co_name" column="co_name" />
+		<result property="co_deuser_cd" column="co_deuser_cd" />
+		<!-- annual 테이블 -->
+		<result property="annual_id" column="annual_id" />
+		<result property="annual_startDay" column="annual_startDay" />
+		<result property="annual_endDay" column="annual_endDay" />
+		<result property="annual_cd" column="annual_cd" />
+		<result property="annual_annu_cd" column="annual_annu_cd" />
+		<result property="annual_reason" column="annual_reason" />
+		<result property="annual_permit" column="annual_permit" />
+		<result property="annual_permit_cd" column="annual_permit_cd" />
+		<result property="annual_submit_time" column="annual_submit_time" />
+		<result property="no" column="no" />
+		<!-- code 테이블 -->
+		<result property="user_cd" column="user_cd" />
+		<result property="user_type" column="user_type" />
+	</resultMap>
+
+	<!-- 총무부 로그인 후 전체 명세서 출력 -->
+	<select id="allPayList" resultMap="moneyResult">
+    	<![CDATA[
+	        SELECT pt.work_period, pt.pay, pt.remain_annual,
+           cm.co_user_cd, cm.co_name, cm.co_deuser_cd, pt.pay_id
+		    FROM pay_TBL pt
+		    INNER JOIN coMember_TBL cm ON pt.pay_id = cm.co_id
+        ]]>
+	</select>
+	
+	<!-- 선택한 급여명세서 출력하고 수정하기 눌렀을 때 선택된 정보 불러오는 기능 -->
+	<select id="viewMyPayList" parameterType="String" resultType="moneyDTO">
+	    <![CDATA[
+	        	SELECT pt.work_period, pt.pay, pt.remain_annual, 
+			    cm.co_user_cd, cm.co_name, pt.pay_id, cm.co_deuser_cd
+			    FROM pay_TBL pt
+			    INNER JOIN coMember_TBL cm ON pt.pay_id = cm.co_id
+			    WHERE pt.pay_id = #{pay_id}
+		]]>
+	</select>
+	
+	
+
+	<!-- 선택한 급여명세서 출력하고 수정하기 눌렀을 때 선택된 정보 불러오는 기능 -->
+	<select id="payListDetail" parameterType="moneyDTO" resultType="moneyDTO">
+	    <![CDATA[
+	        	SELECT pt.work_period, pt.pay, pt.remain_annual, 
+			    cm.co_user_cd, cm.co_name, pt.pay_id, cm.co_deuser_cd
+			    FROM pay_TBL pt
+			    INNER JOIN coMember_TBL cm ON pt.pay_id = cm.co_id
+			    WHERE pt.pay_id = #{pay_id} and pt.work_period = #{work_period}
+		]]>
+	</select>
+
+	<!-- 등록하기 -->
+	<insert id="addPay" parameterType="moneyDTO">
+		insert into pay_tbl (work_period, pay, pay_id, co_name) 
+		values (#{work_period}, #{pay}, (select co_id from coMember_TBL where co_name=#{pay_id}) ,#{pay_id})
+	</insert>
+	
+	<!-- 수정하기 -->
+	<update id="modPay" parameterType="moneyDTO">
+	    <![CDATA[
+	        update pay_tbl set pay=#{pay, jdbcType=VARCHAR}, remain_annual=#{remain_annual, jdbcType=INTEGER} where pay_id=#{pay_id, jdbcType=VARCHAR}
+	    ]]>
+	</update>
+
+
+
+	<!-- 연차 신청서 출력(로그인한 계정의 이름,부서,직급까지 출력 -->
+	<select id="reqAnnual" parameterType="String" resultType="moneyDTO">
+		<![CDATA[
+			SELECT distinct cm.co_name,  cm.co_deuser_cd,  cm.co_user_cd, pt.remain_annual FROM  pay_tbl pt 
+			INNER JOIN  coMember_tbl cm ON pt.pay_id = cm.co_id WHERE pt.pay_id = #{pay_id, jdbcType=VARCHAR}
+		]]>
+	</select>
+
+	<!-- 반차 신청서 작성 -->
+   <insert id="sendHalfAnnual" parameterType="moneyDTO">
+      <![CDATA[
+         INSERT INTO annual (annual_id, annual_startDay, annual_endDay, annual_period, annual_cd, annual_annu_cd, annual_reason, annual_permit, annual_permit_cd)
+         VALUES (#{pay_id},  
+           TO_DATE(#{annual_startDay}, 'YYYY-MM-DD'),
+           TO_DATE(#{annual_startDay}, 'YYYY-MM-DD'),
+           '0.5', 
+           'annual_cd', 
+           #{annual_annu_cd}, 
+           #{annual_reason},
+           'permit_cd',
+           '1')
+      ]]>
+   </insert>
+
+	<!-- 연차 신청서 작성 -->
+	<insert id="sendAnnual" parameterType="moneyDTO">
+		<![CDATA[
+			INSERT INTO annual (annual_id, annual_startDay, annual_endDay, annual_period, annual_cd, annual_annu_cd, annual_reason, annual_permit, annual_permit_cd)
+			VALUES (#{pay_id},  
+	        TO_DATE(#{annual_startDay}, 'YYYY-MM-DD'), 
+	        TO_DATE(#{annual_endDay}, 'YYYY-MM-DD'), 
+	        TO_DATE(#{annual_endDay}, 'YYYY-MM-DD') - TO_DATE(#{annual_startDay}, 'YYYY-MM-DD') + 1, 
+	        'annual_cd', 
+	        #{annual_annu_cd}, 
+	        #{annual_reason},
+	        'permit_cd',
+	        '1')
+		]]>
+	</insert>
+		
+	<!-- 연차 신청 후, 로그인한 아이디의 총 연차 신청 기록 -->
+	<select id="viewMyAnnualList" parameterType="String" resultMap="moneyResult">
+		<![CDATA[
+			SELECT distinct cm.co_name, cm.co_deuser_cd, cm.co_user_cd, at.annual_annu_cd, at.annual_period, pt.remain_annual, at.annual_permit_cd, at.annual_submit_time, at.no
+	        FROM  pay_TBL pt 
+	        INNER JOIN  annual at ON pt.pay_id = at.annual_id 
+	        INNER JOIN coMember_TBL cm ON pt.pay_id = cm.co_id
+	        WHERE pt.pay_id = #{pay_id}
+		]]>
+	</select>
+	
+	
+	<!-- 신청한 연차 신청서 삭제 0409 추가 -->
+	<delete id="cancelMyAnnual" parameterType="int">
+		<![CDATA[
+			delete from annual where no = #{no}
+		]]>
+	</delete>
+	
+		
+	<!-- 권한 및 부서코드 까지 맞는 조건일 시, 부서원들의 연차신청 리스트 출력 -->
+	<select id="viewPartAnnual" parameterType="String" resultMap="moneyResult">
+		<![CDATA[
+			SELECT distinct cm.co_name, cm.co_deuser_cd, cm.co_user_cd, at.annual_annu_cd, at.annual_period, pt.remain_annual, at.annual_permit_cd, at.annual_reason, at.no
+			FROM pay_TBL pt 
+			INNER JOIN annual at ON pt.pay_id = at.annual_id 
+			INNER JOIN coMember_TBL cm ON pt.pay_id = cm.co_id
+			WHERE cm.co_deuser_cd = #{partNo}
+		]]>
+	</select>
+	
+	<!-- 로그인된 아이디의 부서찾기 -->
+	<select id="selectPart" parameterType="String" resultType="String">
+		<![CDATA[
+			select user_cd from code where user_type = #{part} 
+		]]>
+	</select>
+	
+	
+	<!-- 해당 부서원 연차신청서 출력페이지에서 리스트 눌렀을 때 시퀀스 번호로 해당하는 연차신청서 상세 출력 -->
+	<select id="viewAnnualDetail" parameterType="int" resultType="moneyDTO">
+		<![CDATA[
+			SELECT distinct a.annual_id, a.annual_startDay, a.annual_endDay, a.annual_period, a.annual_annu_cd, a.annual_reason, a.annual_permit_cd,
+	        p.remain_annual, a.no,
+	        cm.co_name, cm.co_deuser_cd, cm.co_user_cd
+			FROM annual a
+			INNER JOIN pay_tbl p ON a.annual_id = p.pay_id
+			INNER JOIN coMember_tbl cm ON p.pay_id = cm.co_id
+			WHERE a.no=#{no}
+		]]>
+	</select>
+	
+   <!-- 잔여 연차 수정 -->
+   <update id="permitAnnual" parameterType="moneyDTO">
+      <![CDATA[
+      	UPDATE pay_TBL p 
+		SET p.remain_annual = p.remain_annual - (
+		    SELECT a.annual_period 
+		    FROM annual a  
+		    WHERE a.no = #{no} and a.annual_id = #{annual_id})
+		WHERE p.pay_id = #{annual_id}
+      ]]>
+   </update>
+   
+
+   <!-- 승인 상태 수정 -->
+   <update id="permitCode" parameterType="moneyDTO">
+   		<![CDATA[
+     		update annual set annual_permit_cd = '2' where no = #{no} and annual_id = #{annual_id}
+		]]>
+   </update>
+   
+  
+   
+   <!-- 연차 신청 반려 -->
+   <update id="deniedAnnual" parameterType="moneyDTO">
+	   	<![CDATA[
+	   		update annual set annual_permit_cd = '3' where no = #{no} and annual_id = #{annual_id}
+	   	]]>
+   </update>
+
+</mapper>

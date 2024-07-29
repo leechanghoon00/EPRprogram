@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.board">
+	<resultMap type="boardDTO" id="boResult">
+		<result property="anno_no" column="anno_no" />
+		<result property="co_id" column="co_id" />
+		<result property="co_name" column="co_name" />
+		<result property="anno_part" column="anno_part" />
+		<result property="anno_part_nm" column="anno_part_nm" />
+		<result property="anno_title" column="anno_title" />
+		<result property="anno_content" column="anno_content" />
+		<result property="anno_date" column="anno_date" />
+	</resultMap>
+	
+	<!-- 해당부서 공지사항 리스트 출력 -->
+	<select id="selectAnnoList" parameterType="String" resultMap="boResult">
+		select A.*, 
+		(select co_name from coMember_TBL where co_id = 
+		(select distinct co_id from company_announce where anno_part = (select user_cd from code where user_type = #{part}))) as co_name,
+		(select user_type from code where A.anno_part = user_cd and common_cd = 'depar_cd') as anno_part_nm
+		from company_announce A
+		where anno_part = (select user_cd from code where user_type = #{part}) order by anno_no desc
+	</select>
+	
+	<!-- 전체 공지사항 리스트 출력 -->
+	<select id="selectAnnoAllList" resultMap="boResult">
+		select * from company_announce order by anno_no desc
+	</select>
+	
+	<!-- 공지사항 검증(제목) -->
+	<select id="isTitleExists" parameterType="boardDTO" resultType="int">
+		select count(*) from company_announce where anno_title = #{anno_title}
+	</select>
+
+	<!-- 공지사항 검증(내용) -->
+	<select id="isContentExists" parameterType="boardDTO" resultType="int">
+		select count(*) from company_announce where anno_title = #{anno_title} and anno_content = #{anno_content}
+	</select>
+	
+	<!-- 공지사항 추가 -->
+	<insert id="addAnno" parameterType="boardDTO">
+		insert into company_announce (co_id, anno_part, anno_title, anno_content, anno_date) values 
+		((select co_id from coMember_TBL where co_name = #{co_name}),
+		(select user_cd from code where common_cd = 'depar_cd' and user_type = #{anno_part_nm}), #{anno_title}, #{anno_content}, sysdate)
+	</insert>
+	
+	<!-- 공지사항 수정 -->
+	<update id="modBoard" parameterType="boardDTO">
+		update company_announce set anno_title = #{anno_title}, anno_content = #{anno_content} where anno_no = #{anno_no}
+	</update>
+	
+	<!-- 공지사항 삭제 -->
+	<delete id="delBoard" parameterType="boardDTO">
+		delete from company_announce where anno_no = #{anno_no}
+	</delete>
+	
+	<!-- 해당 공지사항 디테일 출력 -->
+	<select id="annoDetail" parameterType="String" resultMap="boResult">
+		select A.*,
+		(select co_name from coMember_TBL where co_id = 
+		(select co_id from company_announce where anno_no = #{anno_no})) as co_name,
+		(select user_type from code where A.anno_part = user_cd and common_cd = 'depar_cd') as anno_part_nm
+		from company_announce A
+		where anno_no = #{anno_no}
+	</select>
+	
+	
+</mapper>
+

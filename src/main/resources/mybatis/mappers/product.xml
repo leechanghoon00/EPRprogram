@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.product">
+	<resultMap type="productDTO" id="proResult">
+		<result property="no" column="no" />
+		<result property="cus_id" column="cus_id" />
+		<result property="cus_name" column="cus_name" />
+		<result property="item_name" column="item_name" />
+		<result property="item_code" column="item_code" />
+		<result property="item_orderDate" column="item_orderDate" />
+		<result property="item_price" column="item_price" />
+		<result property="item_amount" column="item_amount" />
+		<result property="item_orderAmount" column="item_orderAmount" />
+		<result property="sum_item_orderAmount" column="sum_item_orderAmount" />
+		<result property="item_totalPrice" column="item_totalPrice" />
+		<result property="sum_item_totalPrice" column="sum_item_totalPrice" />
+	</resultMap>
+	
+	<!-- 총무부서 : 제품출하량 -->
+	<select id="salesList" resultMap="proResult">
+		<![CDATA[
+			select cu.cus_name, s.item_name, p.item_code, p.item_price, s.item_orderAmount, s.item_totalPrice, s.item_orderDate
+			from Sales_quantity s, stock_TBL p, customer_TBL cu where s.item_name = p.item_name order by s.item_orderDate desc
+		]]>
+	</select>
+
+	<select id="stockList" resultMap="proResult">
+		<![CDATA[
+			select * from stock_TBL order by item_name asc
+		]]>
+	</select>
+
+	<select id="offersList" resultMap="proResult" parameterType="String">
+		<![CDATA[
+			select * from Sales_quantity where cus_id = #{id}
+		]]>
+	</select>
+	
+	<!-- 개발생산부서 : 재고관리 : 재고수정 -->
+	<insert id="addStock" parameterType="productDTO">
+		insert into stock_TBL 
+		(item_name, item_code, item_price, item_amount)
+		values(#{item_name}, #{item_code}, #{item_price}, #{item_amount})
+	</insert>
+	
+	<!-- 개발생산부서 : 재고관리 : 재고수정 -->
+	<update id="updateAllStock" parameterType="productDTO">
+		update stock_TBL set item_code = #{item_code}, item_price = #{item_price}, item_amount = #{item_amount} where item_name = #{item_name}
+	</update>
+	
+	<!-- 개발생산부서 : 재고관리 : 상품삭제 -->
+	<delete id="deleteStock" parameterType="String">
+		delete from stock_TBL where item_name = #{item_name} 
+	</delete>
+	
+	<insert id="insertOffer" parameterType="productDTO">
+		insert into Sales_quantity 
+		(cus_id, item_name, item_orderDate, item_orderAmount, item_totalPrice) 
+		values(#{cus_id}, #{item_name}, sysdate, #{item_orderAmount}, #{item_totalPrice})
+	</insert>
+	
+	<select id="offersInfo" resultMap="proResult" parameterType="String">
+		select s.no, s.item_name, p.item_code, p.item_price, p.item_amount, s.item_orderAmount, s.item_totalPrice, s.item_orderDate
+		from Sales_quantity s, stock_TBL p where s.item_name = p.item_name and s.cus_id = #{cus_id}
+		order by s.no desc
+	</select>
+	
+	<update id="updateStock" parameterType="productDTO">
+		update stock_TBL set item_amount = #{item_amount} where item_name = #{item_name}
+	</update>
+	
+	<select id="customerStock" resultMap= "proResult" parameterType="String">
+		SELECT s.item_name, p.item_code, p.item_price, SUM(s.item_orderAmount) as sum_item_orderAmount, SUM(s.item_totalPrice) as sum_item_totalPrice
+		FROM Sales_quantity s
+		INNER JOIN stock_TBL p ON s.item_name = p.item_name
+		WHERE s.cus_id = #{cus_id}
+		GROUP BY s.item_name, p.item_code, p.item_price
+	</select>
+	
+	<update id="updateOffer" parameterType="productDTO">
+		update Sales_quantity set cus_id = #{cus_id}, item_name = #{item_name}, item_orderDate = #{item_orderDate}, item_orderAmount = #{item_orderAmount},
+		item_totalPrice = #{item_totalPrice} where no = #{no}
+	</update>
+	
+	<delete id="deleteOffer" parameterType="int">
+		delete from Sales_quantity where no = #{no} 
+	</delete>
+	
+	<!-- 삭제된 레코드의 제품명과 주문 수량을 그룹화하여 가져오는 SELECT 쿼리 -->
+    <select id="selectDeletedRecords" parameterType="int" resultMap="proResult">
+        SELECT item_name, SUM(item_orderAmount) AS sum_item_orderAmount
+        FROM Sales_quantity
+        WHERE no = #{no}
+        GROUP BY item_name
+    </select>
+    
+    <!-- 해당 제품의 수량을 업데이트하는 UPDATE 쿼리 -->
+    <update id="updateStockAmount" parameterType="productDTO">
+        UPDATE stock_TBL
+        SET item_amount = item_amount + #{sum_item_orderAmount}
+        WHERE item_name = #{item_name}
+    </update>
+</mapper>
+

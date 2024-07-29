@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mapper.member">
+
+	<resultMap type="memberDTO" id="memResult">
+		<result property="co_id" column="co_id" />
+		<result property="co_pwd" column="co_pwd" />
+		<result property="co_joinDate" column="co_joinDate" />
+		<result property="co_name" column="co_name" />
+		<result property="co_email" column="co_email" />
+		<result property="co_address" column="co_address" />
+		<result property="co_phone" column="co_phone" />
+		<result property="co_posi_cd" column="co_posi_cd" />
+		<result property="co_user_cd" column="co_user_cd" />
+		<result property="co_user_nm" column="co_user_nm" />
+		<result property="co_depar_cd" column="co_depar_cd" />
+		<result property="co_deuser_cd" column="co_deuser_cd" />
+		<result property="co_deuser_nm" column="co_deuser_nm" />
+	</resultMap>
+	
+	<resultMap type="customerDTO" id="cusResult">
+		<result property="cus_id" column="cus_id"/>
+		<result property="cus_pwd" column="cus_pwd"/>
+		<result property="cus_name" column="cus_name"/>
+		<result property="cus_address" column="cus_address"/>
+		<result property="cus_phone" column="cus_phone"/>
+		<result property="cus_joinDate" column="cus_joinDate"/>
+		<result property="cus_common_code" column="cus_common_code"/>
+		<result property="cus_user_code" column="cus_user_code"/>
+		<result property="cus_email" column="cus_email"/>
+		<result property="subject" column="subject"/>
+		<result property="contents" column="contents"/>
+		<result property="sendDate" column="sendDate"/>
+		<result property="message_no" column="message_no"/>
+		<result property="confirm" column="confirm"/>
+	</resultMap>
+	
+	
+	<!-- 로그인 / 회사-->
+	<select id="coLogin" parameterType="java.util.Map" resultMap="memResult">
+	    <![CDATA[	
+	        select * from coMember_TBL where co_id=#{id} and co_pwd=#{pwd}
+	    ]]>
+	</select>
+	
+	<!-- 로그인 / 거래처-->
+	<select id="cusLogin" parameterType="java.util.Map" resultMap="cusResult">
+	    <![CDATA[	
+	        select * from customer_TBL where cus_id=#{id} and cus_pwd=#{pwd}
+	    ]]>
+	</select>
+	
+	
+	<!-- 회원추가 사용되는 쿼리 -->
+	
+		<insert id="useradd" parameterType="memberDTO">
+		    INSERT INTO coMember_tbl (co_id, co_pwd, co_joinDate, co_name, co_email, co_address, co_phone, co_posi_cd, co_user_cd, co_depar_cd, co_deuser_cd)
+		    VALUES (#{co_id}, #{co_pwd}, #{co_joinDate}, #{co_name}, #{co_email}, #{co_address}, #{co_phone}, 'position_cd', #{co_user_cd}, 'depar_cd', #{co_deuser_cd})
+		</insert>
+		<!--  거래처 추가 -->
+		<insert id="customeradd" parameterType="customerDTO">
+		    INSERT INTO customer_TBL (cus_id, cus_pwd, cus_name, cus_address, cus_phone, cus_joinDate, cus_common_cd, cus_user_cd)
+		    VALUES (#{cus_id}, #{cus_pwd}, #{cus_name}, #{cus_address}, #{cus_phone}, #{cus_joinDate}, 'position_cd', 4)
+		</insert>
+	
+	<!-- 사원 테이블 중복 아이디 확인 -->
+    <select id="isUserIdExists" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM coMember_TBL WHERE co_id = #{co_id}
+    </select>
+
+    <!-- 사원 테이블 중복 이름 확인 -->
+    <select id="isUserNameExists" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM coMember_TBL WHERE co_name = #{co_name}
+    </select>
+
+	<!-- 거래처 테이블 중복 아이디 확인 -->
+    <select id="cusUserIdExists" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM customer_TBL WHERE cus_id = #{cus_id}
+    </select>
+
+    <!-- 거래처 테이블 중복 이름 확인 -->
+    <select id="cusUserNameExists" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM customer_TBL WHERE cus_name = #{cus_name}
+    </select>
+	
+	<!-- 정보 수정 사용되는 쿼리 -->
+	<update id="moduser" parameterType="memberDTO">
+		update coMember_TBL set  
+		co_pwd=#{co_pwd}, 
+		co_phone=#{co_phone}, 
+		co_email=#{co_email},
+		co_address=#{co_address},
+		co_user_cd=#{co_user_cd},
+		co_deuser_cd=#{co_deuser_cd}
+		where co_id=#{co_id}		
+	</update>
+
+	<!-- 정보 수정 사용되는 쿼리 -->
+	<update id="modcustomer" parameterType="customerDTO">
+		update customer_TBL set  
+		cus_pwd=#{cus_pwd}, 
+		cus_phone=#{cus_phone}, 
+		cus_address=#{cus_address}
+		where cus_id=#{cus_id}		
+		
+	</update>
+	
+	<!-- 개인정보 수정 사용되는 쿼리 -->
+	<update id="moduser1" parameterType="memberDTO">
+		update coMember_TBL set  
+		co_pwd=#{co_pwd}, 
+		co_phone=#{co_phone}, 
+		co_email=#{co_email},
+		co_address=#{co_address}
+		where co_id=#{co_id}		
+		
+	</update>
+	
+ 	<!-- 거래처 개인정보 수정 사용되는 쿼리 -->
+	<update id="modcustomer1" parameterType="customerDTO">
+		update customer_TBL set  
+		cus_pwd=#{cus_pwd}, 
+		cus_phone=#{cus_phone}, 
+		cus_address=#{cus_address}
+		where cus_id=#{cus_id}		
+		
+	</update>
+	
+	<!-- 경영지원부서에서 인사관리 -->
+	<select id="userprofile" resultMap="memResult">
+		<![CDATA[
+			select * from coMember_TBL order by co_joinDate desc
+		]]>
+	</select>
+	
+	<!-- 경영지원부서에서 거래처 관리 -->
+	<select id="customer" resultMap="cusResult">
+		<![CDATA[
+			select * from customer_TBL order by cus_joinDate desc
+		]]>
+	</select>
+	
+		<!-- 직원 삭제 사용되는 쿼리 -->
+		<delete id="deluser" parameterType="String">
+		    <![CDATA[
+		        delete from coMember_tbl where co_id=#{co_id, jdbcType=VARCHAR}
+		    ]]>
+		</delete>
+		
+	
+		<!-- 거래처 삭제 사용되는 쿼리 -->
+		<delete id="delcustomer" parameterType="String">
+		    <![CDATA[
+		        delete from customer_TBL where cus_id=#{cus_id, jdbcType=VARCHAR}
+		    ]]>
+		</delete>
+		
+		<!--  직원 개인정보 불러오기 -->
+	<select id="user" parameterType="String" resultMap="memResult">
+		select A.*
+			, (select user_type from code where A.co_user_cd = user_cd and common_cd = 'position_cd') as co_user_nm 
+			, (select user_type from code where A.co_deuser_cd = user_cd and common_cd = 'depar_cd') as co_deuser_nm 
+		from coMember_TBL A where co_id = #{id}
+	</select>	
+		
+		<!--  거래처 개인정보 불러오기 -->
+	<select id="customerpro" parameterType="String" resultMap="cusResult">
+		select * from customer_TBL where cus_id = #{id}
+	</select>
+	
+		<!-- 거래처 FAQ 메시지 전송 -->
+	<insert id="sendMessage" parameterType="customerDTO">
+		insert into message_TBL (cus_name, cus_email, subject, contents) values (#{cus_name}, #{cus_email}, #{subject}, #{contents})
+	</insert>
+		
+		<!-- 거래처 FAQ 리스트 전체 -->
+	<select id="contact" resultMap="cusResult">
+		SELECT message_no, cus_name, cus_email, subject, contents, sendDate,
+	    CASE
+	        WHEN confirm = 'wait' THEN '대기중'
+	        WHEN confirm = 'ok' THEN '확인완료'
+	    END AS confirm FROM message_TBL order by message_no desc
+	</select>
+
+		<!-- 거래처 FAQ 리스트 디테일 -->
+	<select id="contactDetail" parameterType="String" resultMap="cusResult">
+		select * from message_TBL where message_no = #{message_no}
+	</select>	
+		
+		<!-- 거래처 FAQ 컨펌 -->
+	<update id="confirm" parameterType="customerDTO">
+		update message_TBL set confirm = 'ok' where message_no = #{message_no}
+	</update>
+</mapper>
